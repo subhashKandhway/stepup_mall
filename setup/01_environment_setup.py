@@ -79,6 +79,12 @@ for folder in subfolders:
 
 # COMMAND ----------
 
+landing_root = f"/Volumes/{catalog}/stepright/staging"
+
+dbutils.fs.mkdirs(f"{landing_root}")
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC #### Verify the landing zone
 
