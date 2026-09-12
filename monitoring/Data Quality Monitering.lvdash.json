@@ -1,0 +1,469 @@
+{
+  "datasets": [
+    {
+      "name": "expectations_quarantined_customers",
+      "displayName": "DQ Expectations History",
+      "config": {
+        "source": "dev.stepright.dq_expectations_history",
+        "measures": [
+          {
+            "name": "passed_records",
+            "expr": "SUM(passed_records)",
+            "displayName": "Passed Records"
+          },
+          {
+            "name": "failed_records",
+            "expr": "SUM(failed_records)",
+            "displayName": "Failed Records"
+          },
+          {
+            "name": "avg_failure_rate_pct",
+            "expr": "AVG(failure_rate_pct)",
+            "displayName": "Avg Failure Rate %",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 2.0
+              }
+            }
+          }
+        ],
+        "version": "1.1",
+        "comment": "Data quality expectation history for monitoring failures over time.",
+        "dimensions": [
+          {
+            "name": "pipeline_name",
+            "expr": "pipeline_name",
+            "displayName": "Pipeline Name"
+          },
+          {
+            "name": "table_name",
+            "expr": "table_name",
+            "displayName": "Table Name"
+          },
+          {
+            "name": "event_timestamp",
+            "expr": "timestamp",
+            "displayName": "Timestamp",
+            "format": {
+              "type": "date_time",
+              "dateFormat": "year_month_day",
+              "timeFormat": "locale_hour_minute_second"
+            }
+          },
+          {
+            "name": "rule_name",
+            "expr": "rule_name",
+            "displayName": "Rule Name"
+          },
+          {
+            "name": "dataset",
+            "expr": "dataset",
+            "displayName": "Dataset"
+          }
+        ]
+      }
+    },
+    {
+      "name": "dq_quarantine_counts",
+      "displayName": "DQ Quarantine Counts",
+      "config": {
+        "source": "dev.stepright.dq_quarantine_counts",
+        "measures": [
+          {
+            "name": "quarantined_count",
+            "expr": "SUM(quarantined_count)",
+            "displayName": "Quarantined Count"
+          }
+        ],
+        "version": "1.1",
+        "comment": "Quarantine counts by source and check time for monitoring.",
+        "dimensions": [
+          {
+            "name": "source",
+            "expr": "source",
+            "displayName": "Source"
+          },
+          {
+            "name": "checked_at",
+            "expr": "checked_at",
+            "displayName": "Checked At",
+            "format": {
+              "type": "date_time",
+              "dateFormat": "year_month_day",
+              "timeFormat": "locale_hour_minute_second"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "dq_referential_integrity",
+      "displayName": "DQ Referential Integrity",
+      "config": {
+        "source": "dev.stepright.dq_referential_integrity",
+        "measures": [
+          {
+            "name": "orphaned_count",
+            "expr": "SUM(orphaned_count)",
+            "displayName": "Orphaned Count"
+          }
+        ],
+        "version": "1.1",
+        "comment": "Referential integrity monitoring with orphan counts by relationship and check time.",
+        "dimensions": [
+          {
+            "name": "relationship",
+            "expr": "relationship",
+            "displayName": "Relationship"
+          },
+          {
+            "name": "checked_at",
+            "expr": "checked_at",
+            "displayName": "Checked At",
+            "format": {
+              "type": "date_time",
+              "dateFormat": "year_month_day",
+              "timeFormat": "locale_hour_minute_second"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "dq_unified_issue_signals",
+      "displayName": "Unified DQ Issue Signals",
+      "config": {
+        "source": "SELECT\n  checked_at AS event_time,\n  'Quarantine' AS signal_type,\n  source AS signal_source,\n  quarantined_count AS issue_count\nFROM dev.stepright.dq_quarantine_counts UNION ALL SELECT\n  checked_at AS event_time,\n  'Referential Integrity' AS signal_type,\n  relationship AS signal_source,\n  orphaned_count AS issue_count\nFROM dev.stepright.dq_referential_integrity UNION ALL SELECT\n  timestamp AS event_time,\n  'Expectation Failures' AS signal_type,\n  table_name AS signal_source,\n  failed_records AS issue_count\nFROM dev.stepright.dq_expectations_history\n",
+        "measures": [
+          {
+            "name": "total_issues",
+            "expr": "SUM(issue_count)",
+            "displayName": "Total Issues",
+            "format": {
+              "type": "number",
+              "decimalPlaces": {
+                "type": "exact",
+                "places": 0.0
+              },
+              "abbreviation": "compact"
+            }
+          }
+        ],
+        "version": "1.1",
+        "comment": "Unified data quality issue monitoring across all dashboard sources.",
+        "dimensions": [
+          {
+            "name": "event_time",
+            "expr": "event_time",
+            "displayName": "Event Time",
+            "format": {
+              "type": "date_time",
+              "dateFormat": "year_month_day",
+              "timeFormat": "locale_hour_minute_second"
+            }
+          },
+          {
+            "name": "signal_type",
+            "expr": "signal_type",
+            "displayName": "Signal Type"
+          },
+          {
+            "name": "signal_source",
+            "expr": "signal_source",
+            "displayName": "Signal Source"
+          }
+        ]
+      }
+    }
+  ],
+  "pages": [
+    {
+      "name": "8399bd9c",
+      "displayName": "Untitled page",
+      "layout": [
+        {
+          "widget": {
+            "name": "6769e13b",
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-single-select",
+              "encodings": {},
+              "frame": {
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 6,
+            "width": 4,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "quarantine_trend_by_source",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "dq_quarantine_counts",
+                  "fields": [
+                    {
+                      "name": "daily(checked_at)",
+                      "expression": "DATE_TRUNC(\"DAY\", `checked_at`)"
+                    },
+                    {
+                      "name": "measure(quarantined_count)",
+                      "expression": "MEASURE(`quarantined_count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Quarantine Trend by Source"
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "daily(checked_at)",
+                  "displayName": "Day",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(quarantined_count)",
+                  "displayName": "quarantined_count",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 0,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "unified_dq_signals_over_time",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "dq_unified_issue_signals",
+                  "fields": [
+                    {
+                      "name": "signal_type",
+                      "expression": "`signal_type`"
+                    },
+                    {
+                      "name": "daily(event_time)",
+                      "expression": "DATE_TRUNC(\"DAY\", `event_time`)"
+                    },
+                    {
+                      "name": "measure(total_issues)",
+                      "expression": "MEASURE(`total_issues`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Unified DQ Signals Over Time",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "daily(event_time)",
+                  "displayName": "Day",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(total_issues)",
+                  "displayName": "Total Issues",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "signal_type",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 7,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "quarantine_issues_by_day",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "dq_quarantine_counts",
+                  "fields": [
+                    {
+                      "name": "daily(checked_at)",
+                      "expression": "DATE_TRUNC(\"DAY\", `checked_at`)"
+                    },
+                    {
+                      "name": "measure(quarantined_count)",
+                      "expression": "MEASURE(`quarantined_count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Quarantine Issues by Day",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "daily(checked_at)",
+                  "displayName": "Day",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(quarantined_count)",
+                  "displayName": "Quarantined Count",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 4,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "referential_integrity_issues_by_day",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "dq_referential_integrity",
+                  "fields": [
+                    {
+                      "name": "daily(checked_at)",
+                      "expression": "DATE_TRUNC(\"DAY\", `checked_at`)"
+                    },
+                    {
+                      "name": "measure(orphaned_count)",
+                      "expression": "MEASURE(`orphaned_count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Referential Integrity Issues by Day",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "daily(checked_at)",
+                  "displayName": "Day",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(orphaned_count)",
+                  "displayName": "Orphaned Count",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 13,
+            "width": 4,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "7facd4d6",
+      "displayName": "Global Filters",
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
